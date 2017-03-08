@@ -108,9 +108,14 @@ int pixMap_write_bmp16(pixMap *p,char *filename){
 void plugin_destroy(plugin **plug){
  //free the allocated memory and set *plug to zero (NULL)	
  if(!plug || !*plug) return;
-	plugin *this_p = *plug;
-	if(this_p) free(this_p);
-	this_p = 0;
+
+	if((*plug)->data) {
+		free((*plug)->data);
+	}
+	if((*plug)) { 
+		free((*plug));
+	}
+	(*plug) = 0;
 }
 
 plugin *plugin_parse(char *argv[] ,int *iptr){
@@ -194,29 +199,50 @@ static void convolution(pixMap *p, pixMap *oldPixMap,int i, int j,void *data){
 		}
 	}
 	
+	//for each row in the kernal matrix
 	for(int kRow = -1; kRow < 2; kRow++) {
+		//for each element in the row
 		for(int kEle = -1; kEle < 2; kEle++) {
+			//a kernal row idex
 			int kRowIdx = j +kRow;
+			//a kernal ele index 
 			int kEleIdx = i +kEle;
 			
+			//if out of bounds of the kernal rows 
 			if(kRowIdx < 0) {
 				kRowIdx = 0;
 			} else if (kRowIdx > oldPixMap->imageHeight-1) {
 				kRowIdx = oldPixMap->imageHeight-1;
 			}
+			//if out of bounds of the kernal elements
 			if(kEleIdx < 0) {
 				kEleIdx = 0;
 			} else if (kEleIdx > oldPixMap->imageWidth-1) {
 				kEleIdx = oldPixMap->imageWidth-1;
 			}
+			//if the sum is greater than zero, multiply and normalize
+			if(kernSum  > 0) {
+				
+			sumR += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].r*(kernArr[kEle+1][kRow+1])/kernSum);
+			sumG += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].g*(kernArr[kEle+1][kRow+1])/kernSum);
+			sumB += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].b*(kernArr[kEle+1][kRow+1])/kernSum);
+			sumA += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].a*(kernArr[kEle+1][kRow+1])/kernSum);
 			
-			sumR += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].r*(kernArr[kEle+1][kRow+1]))/kernSum;
-			sumG += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].g*(kernArr[kEle+1][kRow+1]))/kernSum;
-			sumB += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].b*(kernArr[kEle+1][kRow+1]))/kernSum;
-			sumA += (oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].a*(kernArr[kEle+1][kRow+1]))/kernSum;
+			} 
+			
+			//otherwise, don't divide by zero and take the absolute value of the multiplication
+			else {
+			sumR += fabs(oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].r*(kernArr[kEle+1][kRow+1]));
+			sumG += fabs(oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].g*(kernArr[kEle+1][kRow+1]));
+			sumB += fabs(oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].b*(kernArr[kEle+1][kRow+1]));
+			sumA += fabs(oldPixMap->pixArray_overlay[kEleIdx][kRowIdx].a*(kernArr[kEle+1][kRow+1]));
+			
+			}
 		}
 	}
-	
+
+	//if any of the values are greater than a RGBA value of 255 or less than 0
+	//set them accordingly
 	if(sumR > 255) {
 		sumR = 255;
 	} else if(sumR < 0) {
@@ -237,7 +263,8 @@ static void convolution(pixMap *p, pixMap *oldPixMap,int i, int j,void *data){
 	}else if(sumA < 0) {
 		sumA = 0;
 	}
-			
+	//set the p->pixarray values to the convoluted RGBA values
+
 	p->pixArray_overlay[i][j].r = sumR;
 	p->pixArray_overlay[i][j].g = sumG;
 	p->pixArray_overlay[i][j].b = sumB;
