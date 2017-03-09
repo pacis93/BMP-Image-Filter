@@ -243,25 +243,33 @@ static void convolution(pixMap *p, pixMap *oldPixMap,int i, int j,void *data){
 
 	//if any of the values are greater than a RGBA value of 255 or less than 0
 	//set them accordingly
-	if(sumR > 255) {
-		sumR = 255;
-	} else if(sumR < 0) {
-		sumR = 0;
-	}
-	if(sumG > 255) {
-		sumG = 255;
-	}else if(sumG < 0) {
-		sumG = 0;
-	}
-	if(sumB > 255) {
-		sumB = 255;
-	}else if(sumB < 0) {
-		sumB = 0;
-	}
-	if(sumA > 255) {
-		sumA = 255;
-	}else if(sumA < 0) {
-		sumA = 0;
+	if(kernSum > 0) {
+	 if(sumR > 255)sumR = 255;
+	 else if(sumR < 0)sumR = 0;
+	 
+	 if(sumG > 255)sumG = 255;
+	 else if(sumG < 0)sumG = 0;
+	 
+	 if(sumB > 255)sumB = 255;
+	 else if(sumB < 0)sumB = 0;
+	 
+	 if(sumA > 255)sumA = 255;
+	 else if(sumA < 0)sumA = 0;
+	 
+	 //inverts the colors so the image is darkened for edge detection.
+	} else {
+	 if(sumR > 255)sumR = 0;
+	 else if(sumR < 0)sumR = 0;
+	 
+	 if(sumG > 255)sumG = 0;
+	 else if(sumG < 0)sumG = 0;
+	 
+	 if(sumB > 255)sumB = 0;
+	 else if(sumB < 0)sumB = 0;
+	 
+	 if(sumA > 255)sumA = 255;
+	 else if(sumA < 0)sumA = 0;
+		
 	}
 	//set the p->pixarray values to the convoluted RGBA values
 
